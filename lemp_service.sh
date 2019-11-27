@@ -15,8 +15,8 @@ export MYSQL_DATABASE=${MYSQL_DATABASE:-**notdefined**}
 export MYSQL_USER=${MYSQL_USER:-**notdefined**}
 export MYSQL_USER_PASS=${MYSQL_USER_PASS:-**notdefined**}
 export SITE_PASS=${SITE_PASS:-**notdefined**}
-export SSH_PUBLIC=${SSH_PUBLIC:-"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC2PeGFvEodzqF0Q1Szrr3WrjAyfGQE3N8ggYMtIG89atldkUBifGbI8Qw0MD52ZmjVUJFSOIUAaD0JTlaSwcDb7g5aQMuhsTDpebDolvMDfIBi+ZuRuph0h1mAMY7424Hpu8xmTQBolHjw2W+M7d8NAJjzNUh2GVTx0xjr723o4PmOQ4Nipan38YiqIK+kPO+hUb1pJ5yC8yI559KZfoXfPIwhp+liuwMEcW8XPgLNZecwl7NMyunjtuEnAatmlooPSA8X4cCMArqMLRLdYqcth+uiheQKDHqt0/7AU2SK/7uo5ZMRsacxz9qa5AyWlCZebo6J5zHO3s8P7tGCJz+9 colin@bitterfield.com"}
-
+export SSH_PUBLIC=${SSH_PUBLIC:-"**notdefined**"}
+export HOST_MOUNT=${HOST_MOUNT:-''}
 set -e
 NAME=LEMP2
 

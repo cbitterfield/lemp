@@ -1,28 +1,28 @@
 #!/bin/bash
 
-MYNAME="`hostname`"
+MYNAME=$(hostname)
 
 #CONSTANTS
 VARLIST="LOG_STDOUT LOG_LEVEL MYSQL_DATABASE MYSQL_USER MYSQL_USER_PASS MYSQL_ROOT_PASS SITE_PASS SSH_PUBLIC"
 # Functions
 function exportBoolean {
     if [ "${!1}" = "**Boolean**" ]; then
-            unset ${1}
+            unset "${1}"
     else 
-            export ${1}='True'
+            export "${1}"='True'
     fi
 }
 
 function checkDefaults {
     if [ "${!1}" = "**notdefined**" ]; then
-            unset ${1}
+            unset "${1}"
     fi
 }
 
 # Test Variables and set accordingly
 # This will unset all undefined variables.
 for var in $VARLIST; do
-  checkDefaults $var
+  checkDefaults "$var"
 done
 
 # Check if TLS is enabled. Unset if not
@@ -31,19 +31,22 @@ exportBoolean TLS
 
 # Set Variables based on defaults and passed variables. Not all will be used
 export SQL_DATABASE=${MYSQL_DATABASE:-default_lemp}
-export SQL_PASSWORD=${MSQL_USER_PASS:-`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-8};echo`}
+export SQL_PASSWORD=${MSQL_USER_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
 export SQL_USER=${MYSQL_USER:-lemp}
-export SQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS:-`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-8};echo`}
-export USER_PASSWORD=${MYSQL_USER_PASS:-`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-8};echo`}
-export LOG_LEVEL={$LOG_LEVEL:-critical}
-export COLS=$(tput cols)
-export FPMCOLS="`expr $COLS - 16`"
+export SQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
+export USER_PASSWORD=${MYSQL_USER_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
+export LOG_LEVEL=${LOG_LEVEL:-critical}
+TCOLS="$(tput cols)"
+FCOLS="(expr "$TCOLS" - 16)"
+export COLS="${TCOLS:-80}"
+export FPMCOLS="${FCOLS:-40}
 
 
 
 
 #  Start First Run
-if [ ! -f "/data/is_configured" ]; then  
+IS_CONFIGURED="/data/is_configured"
+if [ $IS_CONFIGURED does not exist ]; then  
 # Update the OS and all packages
 apt-get update
 apt-get upgrade -y
@@ -55,7 +58,7 @@ echo -e $"$USER_PASSWORD\n$USER_PASSWORD\n" | passwd dev_site
 echo "Linux user [dev_site] password is set to [$USER_PASSWORD]" > /dev/stdout
 
 #Copy all of the files over from _data to the new volume data
-(cd /.data; find . -depth -print | cpio -pdm /data)
+(cd /.data || exit; find . -depth -print | cpio -pdm /data)
 
 #Update PHP.ini configuration
 # Set PHP timezone
@@ -64,10 +67,10 @@ echo "Linux user [dev_site] password is set to [$USER_PASSWORD]" > /dev/stdout
 /bin/sed -i "s/short_open_tag\ \=\ Off/short_open_tag\ \=\ On/g" /etc/php/7.2/fpm/php.ini
 
 # If TLS enabled, generate a key and activate the website with SSL
-if [ "TLS" ]; then
+if [ "$TLS" ]; then
 # Creat default SSL certificate demo site
-RUN openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /data/conf/nginx/tls/$WEBSITE.key -out /data/conf/nginx/tls/$WEBSITE.crt -subj "/C=US/ST=California/L=Webapps/O=Development, Inc./OU=IT/CN=$WEBSITE"
-
+RUN openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /data/conf/nginx/tls/"$WEBSITE".key -out /data/conf/nginx/tls/"$WEBSITE".crt -subj "/C=US/ST=California/L=Webapps/O=Development, Inc./OU=IT/CN=$WEBSITE"
+fi
 
 # Activate nginx sites (default and dev_site)
 ln -s /data/conf/nginx/sites-available/default_site.conf /data/conf/nginx/sites-enabled/
@@ -82,7 +85,7 @@ echo "Creating MySQL Database and setting user/password and root password"
 echo "Initializing mysql datbase"
 /usr/bin/mysql_install_db > /dev/null
 service mysql start
-/usr/bin/mysqladmin create $SQL_DATABASE
+/usr/bin/mysqladmin create "$SQL_DATABASE"
 
 cat << SETUP > /tmp/mysql_setup.sql
 	use mysql;
@@ -97,7 +100,7 @@ rm /tmp/mysql_setup.sql
 
 if [ "$SSH_PUBLIC" ]; then
 	mkdir ~/dev_site/.ssh
-	echo $SSH_PUBLIC > ~/dev_site/.ssh/authorized_keys
+	echo "$SSH_PUBLIC" > ~/dev_site/.ssh/authorized_keys
 	chown -R dev_site:dev_site  ~/dev_site/.ssh
 	chmod 700 ~/dev_site/.ssh
 	chmod 644 ~/dev_site/.ssh/authorized_keys
@@ -105,12 +108,12 @@ if [ "$SSH_PUBLIC" ]; then
 fi
 
 #Send info to user directory just in case
-echo "Starting docker: $MYNAME" > ~dev_site/setup.txt
-echo "website name set to [$WEBSITE]" >> ~dev_site/setup.txt
-echo "database name set to [$SQL_DATABASE]" >> ~dev_site/setup.txt
-echo "database user set to [$SQL_USER]" >> ~dev_site/setup.txt
-echo "database password set to [$SQL_PASSWORD]" >> ~dev_site/setup.txt
-echo "database root password is set to [$SQL_ROOT_PASSWORD]" >> ~dev_site/setup.txt
+(echo "Starting docker: $MYNAME" ;
+echo "website name set to [$WEBSITE]" ;
+echo "database name set to [$SQL_DATABASE]" ;
+echo "database user set to [$SQL_USER]" ;
+echo "database password set to [$SQL_PASSWORD]" ;
+echo "database root password is set to [$SQL_ROOT_PASSWORD]") > ~dev_site/setup.txt
 
 
 
@@ -159,15 +162,14 @@ echo "database user set to [$SQL_USER]" > /dev/stdout
 # Start Services required
 service postfix start
 service ssh start
-service php7.2-fpm start 
-if [ $? -eq 0 ]; then printf " * php-fpm started%*s\n" $FPMCOLS "[OK]" > /dev/stdout; fi
+if ! service php7.2-fpm start; then printf " * php-fpm started%*s\n" "$FPMCOLS" "[OK]" > /dev/stdout; fi
 service nginx start
 
-if (( $(ps -ef | grep -v grep | grep mysql | wc -l) > 0 ))
+if ! pgrep -f mysql;
 then
 	echo "MySQL is already running"
 else
-service mysql start
+    service mysql start
 fi
 
 fi # End the firs run logic

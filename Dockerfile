@@ -125,10 +125,11 @@ ENV LOG_LEVEL="info"
 ENV TERM="xterm-256color"
 ENV LOG_STDOUT="**notdefined**"
 ENV MYSQL_ROOT_PASS="**notdefined**"
-ENV MYSQL.dataBASE="**notdefined**"
+ENV MYSQL_DATABASE="**notdefined**"
 ENV MYSQL_USER="**notdefined**"
 ENV MYSQL_USER_PASS="**notdefined**"
 ENV SITE_PASS="**notdefined**"
+ENV SSH_PUBLIC="**notdefined**"
 ENV TLS="**Boolean**"
 
 
