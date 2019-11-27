@@ -1,0 +1,184 @@
+#!/bin/bash
+
+MYNAME="`hostname`"
+
+#CONSTANTS
+VARLIST="LOG_STDOUT LOG_LEVEL MYSQL_DATABASE MYSQL_USER MYSQL_USER_PASS MYSQL_ROOT_PASS SITE_PASS SSH_PUBLIC"
+# Functions
+function exportBoolean {
+    if [ "${!1}" = "**Boolean**" ]; then
+            unset ${1}
+    else 
+            export ${1}='True'
+    fi
+}
+
+function checkDefaults {
+    if [ "${!1}" = "**notdefined**" ]; then
+            unset ${1}
+    fi
+}
+
+# Test Variables and set accordingly
+# This will unset all undefined variables.
+for var in $VARLIST; do
+  checkDefaults $var
+done
+
+# Check if TLS is enabled. Unset if not
+exportBoolean TLS
+
+
+# Set Variables based on defaults and passed variables. Not all will be used
+export SQL_DATABASE=${MYSQL_DATABASE:-default_lemp}
+export SQL_PASSWORD=${MSQL_USER_PASS:-`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-8};echo`}
+export SQL_USER=${MYSQL_USER:-lemp}
+export SQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS:-`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-8};echo`}
+export USER_PASSWORD=${MYSQL_USER_PASS:-`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-8};echo`}
+export LOG_LEVEL={$LOG_LEVEL:-critical}
+export COLS=$(tput cols)
+export FPMCOLS="`expr $COLS - 16`"
+
+
+
+
+#  Start First Run
+if [ ! -f "/data/is_configured" ]; then  
+# Update the OS and all packages
+apt-get update
+apt-get upgrade -y
+apt autoremove -y
+
+echo "Configuring system for first use"
+echo "Passwords are set on first run only"
+echo -e $"$USER_PASSWORD\n$USER_PASSWORD\n" | passwd dev_site
+echo "Linux user [dev_site] password is set to [$USER_PASSWORD]" > /dev/stdout
+
+#Copy all of the files over from _data to the new volume data
+(cd /.data; find . -depth -print | cpio -pdm /data)
+
+#Update PHP.ini configuration
+# Set PHP timezone
+/bin/sed -i "s/\;date\.timezone\ \=/date\.timezone\ \=\ ${DATE_TIMEZONE}/" /etc/php/7.2/fpm/php.ini
+# enable php short tags:
+/bin/sed -i "s/short_open_tag\ \=\ Off/short_open_tag\ \=\ On/g" /etc/php/7.2/fpm/php.ini
+
+# If TLS enabled, generate a key and activate the website with SSL
+if [ "TLS" ]; then
+# Creat default SSL certificate demo site
+RUN openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /data/conf/nginx/tls/$WEBSITE.key -out /data/conf/nginx/tls/$WEBSITE.crt -subj "/C=US/ST=California/L=Webapps/O=Development, Inc./OU=IT/CN=$WEBSITE"
+
+
+# Activate nginx sites (default and dev_site)
+ln -s /data/conf/nginx/sites-available/default_site.conf /data/conf/nginx/sites-enabled/
+ln -s /data/conf/nginx/sites-available/dev_site.conf /data/conf/nginx/sites-enabled/
+
+# Create and error configuration file for nginx
+echo "error_log /var/log/nginx/nginx_error.log debug;" > /data/conf/nginx/conf.d/error_nginx.conf
+echo "error_log /var/log/nginx/default_error.log debug;" > /data/conf/nginx/conf.d/error_default.conf
+echo "error_log /var/log/nginx/dev_site.error.log debug;" > /data/conf/nginx/conf.d/error_dev.conf
+
+echo "Creating MySQL Database and setting user/password and root password"
+echo "Initializing mysql datbase"
+/usr/bin/mysql_install_db > /dev/null
+service mysql start
+/usr/bin/mysqladmin create $SQL_DATABASE
+
+cat << SETUP > /tmp/mysql_setup.sql
+	use mysql;
+    CREATE USER $SQL_USER@'%' IDENTIFIED BY "$SQL_PASSWORD";
+    GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'%' ;
+    update user set authentication_string=password("$SQL_ROOT_PASSWORD") where user='root';
+    FLUSH PRIVILEGES;
+SETUP
+
+mysql -u root mysql < /tmp/mysql_setup.sql
+rm /tmp/mysql_setup.sql
+
+if [ "$SSH_PUBLIC" ]; then
+	mkdir ~/dev_site/.ssh
+	echo $SSH_PUBLIC > ~/dev_site/.ssh/authorized_keys
+	chown -R dev_site:dev_site  ~/dev_site/.ssh
+	chmod 700 ~/dev_site/.ssh
+	chmod 644 ~/dev_site/.ssh/authorized_keys
+
+fi
+
+#Send info to user directory just in case
+echo "Starting docker: $MYNAME" > ~dev_site/setup.txt
+echo "website name set to [$WEBSITE]" >> ~dev_site/setup.txt
+echo "database name set to [$SQL_DATABASE]" >> ~dev_site/setup.txt
+echo "database user set to [$SQL_USER]" >> ~dev_site/setup.txt
+echo "database password set to [$SQL_PASSWORD]" >> ~dev_site/setup.txt
+echo "database root password is set to [$SQL_ROOT_PASSWORD]" >> ~dev_site/setup.txt
+
+
+
+cat << EOB > /dev/stdout
+    
+    ****************************************************************
+    *                                                              *
+    *    Docker image: cbitterfield/lemp-ubuntu18-04               *
+    *    GitHub:https://github.com/cbitterfield/lemp-ubuntu18-04   *
+    *                                                              *
+    ****************************************************************
+
+    CONTAINER SETTINGS
+    ---------------
+    · Please refer to READ.md for detailed instructions
+    · Supports changing LOG_LEVEL for NGINX
+    · Supports TLS on or off
+    · PHP date timezone [DATE_TIMEZONE]: $DATE_TIMEZONE
+    · Allows for SSH and SFTP access (and Key based access)
+    · Allows custom MySQL database and user
+    · Allow override on NGINX via ./conf.d
+    	files that start with pre_http_* are loaded before that block
+    	files that start with http_* are loaded at the end of the standard block
+    · Allows for port redirection on 22,80,443, and 3306
+    · Allows local host volume or docker volume for persistane
+    · Included service start/stop and other useful choices (see github)
+	
+EOB
+
+# Send this infor to stdout last for easier readability
+echo "Starting docker: $MYNAME" > /dev/stdout
+echo "website name set to [$WEBSITE]" > /dev/stdout
+echo "database name set to [$SQL_DATABASE]" > /dev/stdout
+echo "database user set to [$SQL_USER]" > /dev/stdout
+echo "database password set to [$SQL_PASSWORD]" > /dev/stdout
+echo "database root password is set to [$SQL_ROOT_PASSWORD]" > /dev/stdout
+
+touch /data/is_configured
+else # end first run work
+
+echo "Starting docker: $MYNAME" > /dev/stdout
+echo "website name set to [$WEBSITE]" > /dev/stdout
+echo "database name set to [$SQL_DATABASE]" > /dev/stdout
+echo "database user set to [$SQL_USER]" > /dev/stdout
+
+# Start Services required
+service postfix start
+service ssh start
+service php7.2-fpm start 
+if [ $? -eq 0 ]; then printf " * php-fpm started%*s\n" $FPMCOLS "[OK]" > /dev/stdout; fi
+service nginx start
+
+if (( $(ps -ef | grep -v grep | grep mysql | wc -l) > 0 ))
+then
+	echo "MySQL is already running"
+else
+service mysql start
+fi
+
+fi # End the firs run logic
+
+if [ -f "LOG_STDOUT" ]; then
+	tail -f LOG_STDOUT > /dev/stdout
+fi
+
+
+#if the container is stopped and started we will not be able to redirect so we need this
+# statement to keep it running
+while true; do
+    sleep 360
+done

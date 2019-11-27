@@ -1,0 +1,4 @@
+[mysqld]
+datadir		= /data/mysql
+log_error 	= /data/log/mysql/error.log
+bind-address= 0.0.0.0
