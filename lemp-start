@@ -1,6 +1,8 @@
 #!/bin/bash
 
 MYNAME=$(hostname)
+printf 'Starting node %s' "${MYNAME}"
+
 
 #CONSTANTS
 VARLIST="LOG_STDOUT LOG_LEVEL MYSQL_DATABASE MYSQL_USER MYSQL_USER_PASS MYSQL_ROOT_PASS SITE_PASS SSH_PUBLIC"
@@ -37,25 +39,26 @@ export SQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9
 export USER_PASSWORD=${MYSQL_USER_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
 export LOG_LEVEL=${LOG_LEVEL:-critical}
 TCOLS="$(tput cols)"
-FCOLS="(expr "$TCOLS" - 16)"
+FCOLS="$(( TCOLS - 16))"
 export COLS="${TCOLS:-80}"
-export FPMCOLS="${FCOLS:-40}
+export FPMCOLS="${FCOLS:-40}"
 
 
 
 
 #  Start First Run
-IS_CONFIGURED="/data/is_configured"
-if [ $IS_CONFIGURED does not exist ]; then  
+IS_CONFIGURED='/data/is_configured'
+if [ ! -f "$IS_CONFIGURED" ]; then 
 # Update the OS and all packages
 apt-get update
 apt-get upgrade -y
 apt autoremove -y
 
-echo "Configuring system for first use"
-echo "Passwords are set on first run only"
-echo -e $"$USER_PASSWORD\n$USER_PASSWORD\n" | passwd dev_site
-echo "Linux user [dev_site] password is set to [$USER_PASSWORD]" > /dev/stdout
+printf 'Configuring system for first use'
+printf 'Passwords are set on first run only'
+printf  '%s\n%s\n' "${USER_PASSWORD?}" "${USER_PASSWORD?}" | passwd dev_site
+printf 'Linux user [dev_site] password is set to [%s]' "${USER_PASSWORD} " > /dev/stdout
+
 
 #Copy all of the files over from _data to the new volume data
 (cd /.data || exit; find . -depth -print | cpio -pdm /data)
@@ -73,6 +76,7 @@ RUN openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /data/conf/
 fi
 
 # Activate nginx sites (default and dev_site)
+sed -i '/__SERVERNAME__/c $WEBSITE/'   /data/conf/nginx/sites-available/dev_site.conf
 ln -s /data/conf/nginx/sites-available/default_site.conf /data/conf/nginx/sites-enabled/
 ln -s /data/conf/nginx/sites-available/dev_site.conf /data/conf/nginx/sites-enabled/
 
@@ -152,7 +156,9 @@ echo "database password set to [$SQL_PASSWORD]" > /dev/stdout
 echo "database root password is set to [$SQL_ROOT_PASSWORD]" > /dev/stdout
 
 touch /data/is_configured
-else # end first run work
+fi
+# end first run work
+
 
 echo "Starting docker: $MYNAME" > /dev/stdout
 echo "website name set to [$WEBSITE]" > /dev/stdout
@@ -162,19 +168,22 @@ echo "database user set to [$SQL_USER]" > /dev/stdout
 # Start Services required
 service postfix start
 service ssh start
-if ! service php7.2-fpm start; then printf " * php-fpm started%*s\n" "$FPMCOLS" "[OK]" > /dev/stdout; fi
+if service php7.2-fpm start;
+then 
+   printf ' * php-fpm started%*s\n' "$FPMCOLS" "[OK]" > /dev/stdout
+fi
 service nginx start
 
-if ! pgrep -f mysql;
+if ! pgrep -f mysql > /dev/null;
 then
-	echo "MySQL is already running"
+	echo 'MySQL is already running'
 else
     service mysql start
 fi
 
-fi # End the firs run logic
 
-if [ -f "LOG_STDOUT" ]; then
+if  test -f "$LOG_STDOUT";
+then
 	tail -f LOG_STDOUT > /dev/stdout
 fi
 

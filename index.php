@@ -9,6 +9,7 @@ $server_name = $_SERVER['SERVER_NAME'];
         $server_name = "default server";
     }
     
+    $title = $_SERVER['SERVER_NAME'];
 
     		
     $serverGlobals = $GLOBALS['_SERVER'];
@@ -28,7 +29,7 @@ $server_name = $_SERVER['SERVER_NAME'];
 print <<< HTML
 <html>
  <head>
-  <title>$server_name</title>
+  <title>$title</title>
  </head>
 <style>
 table {
