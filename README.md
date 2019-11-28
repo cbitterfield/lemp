@@ -4,34 +4,43 @@ LEMP is a variation of the ubiquitous LAMP stack used for developing and deployi
 
 ![cbitterfield logo]<img src="https://github.com/cbitterfield/lemp/blob/master/cbitterfield_logo.jpg" alt="cbitterfield logo" width="250" >
 
-### Markdown
+logo by Anna Maria Paliasna Weaver (c) 2019
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+# This is a fully functional LEMP development environment with Secure Headers
+This image is designed to be fully functional with data persitence.
 
-```markdown
-Syntax highlighted code block
+## Capabilities:
 
-# Header 1
-## Header 2
-### Header 3
+* Start/Stop/Login script included for easy use
+* Supports TLS self signed and real
+* Allows for configuring database name, user and password via environment variables.
+* Allows doe SSH/SFTP access by password and by key
+* Includes a fully comprehensive example index.php to test LEMP functions
+* Includes support for secure headers in TLS
+* Fully documented scripts and docker file
+* Fully configurable logging and debugging
+* Fully configured with a seperate user and group for LEMP site (username = dev_site)
+* Single mount point for host
+* Uses docker volumes if not using host mount point
 
-- Bulleted
-- List
+### Environment variables
 
-1. Numbered
-2. List
+**Variables:**
+- LOG_LEVEL
+- LOG_STDOUT
+- MYSQL_DATABASE
+- MYSQL_USER
+- MYSQL_USER_PASS
+- SITE_PASS
+- SSH_PUBLIC
+- TLS
 
-**Bold** and _Italic_ and `Code` text
+## service script (lemp_service.sh)
 
-[Link](url) and ![Image](src)
-```
+usage lemp_service.sh [start|stop|status|show_docker|login|clear]
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+Script passes through any locally set variables.
 
-### Jekyll Themes
+login option runs interactive bash shell
+clear option removes all containers in use
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/cbitterfield/lemp2/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
