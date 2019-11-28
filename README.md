@@ -47,3 +47,12 @@ clear option removes all containers in use
 Article on the building of this image is available
 Full References available
 [MEDIUM](https://medium.com/@cbitterfield/creating-a-docker-development-lemp-container-a90e64d69b36)
+
+## Example DOCKER USAGE
+
+docker run -it --name LEMP \
+    -p "$HTTP_PORT":80 -p HTTPS_PORT:443 -p "$SSH_PORT":22  -p "$MYSQL_PORT":3306 
+    --add-host "$WEBSITE":127.0.0.1 \
+    --env WEBSITE  --env LOG_STDOUT  --env LOG_LEVEL --env MYSQL_USER --env TLS --env MYSQL_USER_PASS \
+    --env MYSQL_ROOT_PASS --env SITE_PASS --env SSH_PUBLIC --env MYSQL_DATABASE \
+    -v $MOUNT_POINT:/data cbitterfield/lemp2:latest
