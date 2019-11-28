@@ -1,8 +1,8 @@
-## Welcome to GitHub Pages
+## LEMP: Linux | NGINX | MYSQP | PHP Docker Image
 
-You can use the [editor on GitHub](https://github.com/cbitterfield/lemp2/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+LEMP is a variation of the ubiquitous LAMP stack used for developing and deploying web applications. Traditionally, LAMP consists of Linux, Apache, MySQL, and PHP. Due to its modular nature, the components can easily be swapped out. With LEMP, Apache is replaced with the lightweight yet powerful Nginx.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+![cbitterfield logo](https://github.com/cbitterfield/lemp/blob/master/cbitterfield_logo.jpg |width=250)
 
 ### Markdown
 
