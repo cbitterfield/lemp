@@ -105,6 +105,7 @@ RUN sed -i '/error_log \/var\/log\/nginx\/error.log;/c \\tinclude \/data\/conf\/
 RUN unlink /etc/nginx/sites-enabled/default
 COPY default_site.conf /.data/conf/nginx/sites-available/default_site.conf
 COPY dev_site.conf /.data/conf/nginx/sites-available/dev_site.conf
+COPY dev_site_tls.conf /.data/conf/nginx/sites-available/dev_site_tls.conf
 COPY index.php /.data/html/
 COPY http_nginx.conf /.data/conf/nginx/conf.d/
 COPY pre_http_nginx.conf /.data/conf/nginx/conf.d/

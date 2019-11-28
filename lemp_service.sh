@@ -17,8 +17,28 @@ export MYSQL_USER_PASS=${MYSQL_USER_PASS:-**notdefined**}
 export SITE_PASS=${SITE_PASS:-**notdefined**}
 export SSH_PUBLIC=${SSH_PUBLIC:-"**notdefined**"}
 export HOST_MOUNT=${HOST_MOUNT:-''}
+if [ $HOST_MOUNT ]; then 
+export MOUNT_POINT="${HOST_MOUNT}:/data"
+else
+unset MOUNT_POINT
+fi
+
 set -e
 NAME=LEMP2
+INSTANCE="cbitterfield/lemp2:latest"
+
+#Build the docker command based on parameters:
+#It will be docker run CMD
+#
+CMD="/usr/local/bin/docker run --name $NAME -it "
+if [ "$SSH_PORT" ]; then CMD="$CMD -p $SSH_PORT:22"  ; fi
+if [ "$HTTP_PORT" ]; then CMD="$CMD -p $HTTP_PORT:80"  ; fi
+if [ "$HTTPS_PORT" ]; then CMD="$CMD -p $HTTPS_PORT:443 "  ; fi
+if [ "$MYSQL_PORT" ]; then CMD="$CMD -p $MYSQL_PORT:3306 "  ; fi
+if [ "$WEBSITE" ]; then CMD="$CMD --add-host $WEBSITE:127.0.0.1 "  ; fi
+CMD="$CMD --env WEBSITE  --env LOG_STDOUT  --env LOG_LEVEL --env MYSQL_USER --env TLS --env MYSQL_USER_PASS --env MYSQL_ROOT_PASS --env SITE_PASS --env SSH_PUBLIC --env MYSQL_DATABASE"
+if [ "$MOUNT_POINT" ]; then CMD="$CMD -v $MOUNT_POINT "  ; fi
+CMD="$CMD $INSTANCE"
 
 ###############################################
 
@@ -32,19 +52,18 @@ case "$1" in
         if [ "$DATABASE_USER_PASS" ]; then echo "database password set to [$DATABASE_USER_PASS]" ; fi
         if [ "$DEVSITE_PASS" ]; then echo "Linux user [dev_site] password is set to [$DEVSITE_PASS]" ; fi
         if [ "$SSH_PUBLIC" ]; then echo "Enabling key access to [dev_site] password" ; fi
+        if [ "$MOUNT_POINT" ]; then echo "MOUNT_POINT is $MOUNT_POINT" ; fi
         echo "All undefined values are defaulted on startup and presented to sdtout"
         echo "In the user directory is a copy of all of the passswords, delete after you have downloaded it"
         # Test to see if a container is already running as LEMP2
+        
         LEMP2="$(docker ps -f name=$NAME -qa)"
         if [ "$LEMP2" ]; then 
              echo "Starting an existing container $NAME"
              docker start $NAME -a
         else
              echo "Starting a new container $NAME"
-             docker run --name LEMP2 -it -p "$HTTP_PORT":80 -p "$HTTPS_PORT":443 -p "$SSH_PORT":22 -p "$MYSQL_PORT":3306 \
-        --add-host "$WEBSITE":127.0.0.1 --env WEBSITE  --env LOG_STDOUT  --env LOG_LEVEL --env MYSQL_USER \
-        --env MYSQL_USER_PASS --env MYSQL_ROOT_PASS --env SITE_PASS --env DATABASE -v "$HOME"/data:/data\
-        cbitterfield/lemp2:latest
+             $CMD
         fi
         
 	;;

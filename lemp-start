@@ -36,7 +36,7 @@ export SQL_DATABASE=${MYSQL_DATABASE:-default_lemp}
 export SQL_PASSWORD=${MSQL_USER_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
 export SQL_USER=${MYSQL_USER:-lemp}
 export SQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
-export USER_PASSWORD=${MYSQL_USER_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
+export SITE_PASS=${SITE_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
 export LOG_LEVEL=${LOG_LEVEL:-critical}
 TCOLS="$(tput cols)"
 FCOLS="$(( TCOLS - 16))"
@@ -57,7 +57,7 @@ apt autoremove -y
 printf 'Configuring system for first use'
 printf 'Passwords are set on first run only'
 printf  '%s\n%s\n' "${USER_PASSWORD?}" "${USER_PASSWORD?}" | passwd dev_site
-printf 'Linux user [dev_site] password is set to [%s]' "${USER_PASSWORD} " > /dev/stdout
+printf 'Linux user [dev_site] password is set to [%s]' "${SITE_PASS} " > /dev/stdout
 
 
 #Copy all of the files over from _data to the new volume data
@@ -69,16 +69,28 @@ printf 'Linux user [dev_site] password is set to [%s]' "${USER_PASSWORD} " > /de
 # enable php short tags:
 /bin/sed -i "s/short_open_tag\ \=\ Off/short_open_tag\ \=\ On/g" /etc/php/7.2/fpm/php.ini
 
+
+# Activate nginx sites (default and dev_site)
+cd /data/conf/nginx/sites-available/ || exit
+sed -i.bak "s/__SERVERNAME__/${WEBSITE}/" /data/conf/nginx/sites-available/dev_site.conf && rm dev_site.conf.bak
+sed -i.bak "s/__SERVERNAME__/${WEBSITE}/" /data/conf/nginx/sites-available/dev_site_tls.conf && rm dev_site_tls.conf.bak
+ln -s /data/conf/nginx/sites-available/default_site.conf /data/conf/nginx/sites-enabled/
+ln -s /data/conf/nginx/sites-available/dev_site.conf /data/conf/nginx/sites-enabled/
+
+# Customize the index.php file for database parameters
+cd /data/html/ || exit
+sed -i.bak "s/__sqldatabase__/${SQL_DATABASE}/" /data/html/index.php && rm index.php.bak
+sed -i.bak "s/__sqlusername__/${SQL_USER}/"     /data/html/index.php && rm index.php.bak
+sed -i.bak "s/__sqlpassword__/${SQL_PASSWORD}/" /data/html/index.php && rm index.php.bak
+
 # If TLS enabled, generate a key and activate the website with SSL
 if [ "$TLS" ]; then
 # Creat default SSL certificate demo site
-RUN openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /data/conf/nginx/tls/"$WEBSITE".key -out /data/conf/nginx/tls/"$WEBSITE".crt -subj "/C=US/ST=California/L=Webapps/O=Development, Inc./OU=IT/CN=$WEBSITE"
+openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /data/conf/nginx/tls/"$WEBSITE".key -out /data/conf/nginx/tls/"$WEBSITE".crt -subj "/C=US/ST=California/L=Webapps/O=Development, Inc./OU=IT/CN=$WEBSITE"
+ln -s /data/conf/nginx/sites-available/dev_site_tls.conf /data/conf/nginx/sites-enabled/
 fi
 
-# Activate nginx sites (default and dev_site)
-sed -i '/__SERVERNAME__/c $WEBSITE/'   /data/conf/nginx/sites-available/dev_site.conf
-ln -s /data/conf/nginx/sites-available/default_site.conf /data/conf/nginx/sites-enabled/
-ln -s /data/conf/nginx/sites-available/dev_site.conf /data/conf/nginx/sites-enabled/
+
 
 # Create and error configuration file for nginx
 echo "error_log /var/log/nginx/nginx_error.log debug;" > /data/conf/nginx/conf.d/error_nginx.conf
@@ -95,7 +107,13 @@ cat << SETUP > /tmp/mysql_setup.sql
 	use mysql;
     CREATE USER $SQL_USER@'%' IDENTIFIED BY "$SQL_PASSWORD";
     GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'%' ;
-    update user set authentication_string=password("$SQL_ROOT_PASSWORD") where user='root';
+    CREATE USER $SQL_USER@'localhost' IDENTIFIED BY "$SQL_PASSWORD";
+    GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'localhost' ;
+    CREATE USER $SQL_USER@'$HOSTNAME' IDENTIFIED BY "$SQL_PASSWORD";
+    GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'$HOSTNAME' ;  
+    SET PASSWORD FOR 'root'@'localhost' = PASSWORD("$SQL_ROOT_PASSWORD");
+    SET PASSWORD FOR 'root'@'$HOSTNAME' = PASSWORD("$SQL_ROOT_PASSWORD");
+    delete from user where user='';
     FLUSH PRIVILEGES;
 SETUP
 
@@ -103,17 +121,18 @@ mysql -u root mysql < /tmp/mysql_setup.sql
 rm /tmp/mysql_setup.sql
 
 if [ "$SSH_PUBLIC" ]; then
-	mkdir ~/dev_site/.ssh
-	echo "$SSH_PUBLIC" > ~/dev_site/.ssh/authorized_keys
-	chown -R dev_site:dev_site  ~/dev_site/.ssh
-	chmod 700 ~/dev_site/.ssh
-	chmod 644 ~/dev_site/.ssh/authorized_keys
+	mkdir ~dev_site/.ssh
+	echo "$SSH_PUBLIC" > ~dev_site/.ssh/authorized_keys
+	chown -R dev_site:dev_site  ~dev_site/.ssh
+	chmod 700 ~dev_site/.ssh
+	chmod 644 ~dev_site/.ssh/authorized_keys
 
 fi
 
 #Send info to user directory just in case
 (echo "Starting docker: $MYNAME" ;
 echo "website name set to [$WEBSITE]" ;
+echo "dev_site password is set to [$SITE_PASS]";
 echo "database name set to [$SQL_DATABASE]" ;
 echo "database user set to [$SQL_USER]" ;
 echo "database password set to [$SQL_PASSWORD]" ;
@@ -147,14 +166,13 @@ cat << EOB > /dev/stdout
 	
 EOB
 
-# Send this infor to stdout last for easier readability
-echo "Starting docker: $MYNAME" > /dev/stdout
-echo "website name set to [$WEBSITE]" > /dev/stdout
-echo "database name set to [$SQL_DATABASE]" > /dev/stdout
+# Send this info to stdout last for easier readability
+echo "****************************************************************"
+echo "Configuring passwords on first run"
 echo "database user set to [$SQL_USER]" > /dev/stdout
 echo "database password set to [$SQL_PASSWORD]" > /dev/stdout
 echo "database root password is set to [$SQL_ROOT_PASSWORD]" > /dev/stdout
-
+echo "Linux user [dev_site] password is set to [$SITE_PASS]" > /dev/stdout
 touch /data/is_configured
 fi
 # end first run work
@@ -169,7 +187,8 @@ echo "database user set to [$SQL_USER]" > /dev/stdout
 service postfix start
 service ssh start
 if service php7.2-fpm start;
-then 
+then
+   printf 'TCOLS %s FCOLS %s'  "$TCOLS" "FCOLS"  > /dev/stdout
    printf ' * php-fpm started%*s\n' "$FPMCOLS" "[OK]" > /dev/stdout
 fi
 service nginx start
