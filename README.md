@@ -44,3 +44,6 @@ Script passes through any locally set variables.
 login option runs interactive bash shell
 clear option removes all containers in use
 
+Article on the building of this image is available
+Full References available
+[MEDIUM](https://medium.com/@cbitterfield/creating-a-docker-development-lemp-container-a90e64d69b36)
