@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Author Colin A. Bitterfield
+# Source code available on github.com/cbitterfield/lemp2
+# License: GNU Public 3.0
+
 # Set Default Environment Variables here
 export LOG_STDOUT=${LOG_STDOUT:-"/data/logs/nginix/dev_site/access.log"}
 export LOG_LEVEL=${LOG_LEVEL:-info}

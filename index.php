@@ -18,7 +18,7 @@ $server_name = $_SERVER['SERVER_NAME'];
     		
     $serverGlobals = $GLOBALS['_SERVER'];
     $global_output = "<table id=\"t01\">\n";
-    $global_output = $global_output . "<tr><th><h2>Values from the super global _SERVER associative array:</h2></th></tr>";
+    $global_output = $global_output . "<tr><th colspan=\"2\"><h2>Values from the super global _SERVER associative array:</h2></th></tr>";
     $global_output = $global_output . "\t\t<tr><th>Key</th><th>Value</th></tr>\n"; //display just the value
     $count = 1;
     while (list($key,$value) = each($serverGlobals)) {
@@ -52,7 +52,7 @@ $server_name = $_SERVER['SERVER_NAME'];
         //header("Location: $url"); Use this to redirect the user if the connection fails.
        
     } else {
-        $database_connect_message = "database services connected with user " . $username;
+        $database_connect_message = "database services connected with user " . $sql_username;
         
     }
     
@@ -61,11 +61,9 @@ $server_name = $_SERVER['SERVER_NAME'];
     $values = array();
     $columns = array();
     if ($conn) {
-        print "Testing Database Query";
         $res = $conn->query($sql);
         $values = $res->fetch_all(MYSQLI_ASSOC);
         if(!empty($values)){
-            print "Getting Column Names";
             $columns = array_keys($values[0]);
             $names = print_r ($columns,true);
             
@@ -74,7 +72,7 @@ $server_name = $_SERVER['SERVER_NAME'];
         
         // Create a HTML table if there are results
         $database_table = "<table id=\"t01\">\n";
-        $database_table = $database_table . "<tr><th><h2>Values from the SQL query results of $sql<h2></th><tr>";
+        $database_table = $database_table . "<tr><th colspan=\"2\"><h2>Values from the SQL query results of $sql<h2></th><tr>";
         // Create a header row
         $database_table = $database_table . "\n\t\t<tr>";
         foreach ($columns as $column){
@@ -123,10 +121,10 @@ table#t01 th {
 }
 </style>
  <body>
-    <table id=\"t01\">
-    <tr><th><h2>Testing your LEMP Configuration and SQL connection</h2></th></tr>
+    <table id="t01">
+    <tr><th colspan="2"><h2>Testing your LEMP Configuration and SQL connection</h2></th></tr>
     <tr><td>My name is</td><td>$server_name</td></tr>
-    <tr><td>This is a test of HTML and PHP</td></tr>
+    <tr><td colspan="2">This is a test of HTML and PHP</td></tr>
     <tr><td>Testing connection with default database</td><td>[$sql_database]</td></tr>
     <tr><td>Database connection test results</td><td>$database_connect_message</td></tr>
     </table>
