@@ -31,9 +31,18 @@ This image is designed to be fully functional with data persitence.
 - MYSQL_DATABASE
 - MYSQL_USER
 - MYSQL_USER_PASS
+- MYSQL_ROOT_PASS 
 - SITE_PASS
 - SSH_PUBLIC
 - TLS
+
+### Ports Exposed
+
+**Ports**
+- 22 [SSH/SFTP]
+- 80 [http]
+- 443 [https]
+- 3603 [mysql]
 
 ## service script (lemp_service.sh)
 
