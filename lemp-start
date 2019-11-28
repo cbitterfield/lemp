@@ -4,6 +4,7 @@ MYNAME=$(hostname)
 printf 'Starting node %s' "${MYNAME}"
 
 
+
 #CONSTANTS
 VARLIST="LOG_STDOUT LOG_LEVEL MYSQL_DATABASE MYSQL_USER MYSQL_USER_PASS MYSQL_ROOT_PASS SITE_PASS SSH_PUBLIC"
 # Functions
@@ -27,18 +28,21 @@ for var in $VARLIST; do
   checkDefaults "$var"
 done
 
+
+
 # Check if TLS is enabled. Unset if not
 exportBoolean TLS
 
 
 # Set Variables based on defaults and passed variables. Not all will be used
 export SQL_DATABASE=${MYSQL_DATABASE:-default_lemp}
-export SQL_PASSWORD=${MSQL_USER_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
+export SQL_PASSWORD=${MYSQL_USER_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
 export SQL_USER=${MYSQL_USER:-lemp}
 export SQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
 export SITE_PASS=${SITE_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
 export LOG_LEVEL=${LOG_LEVEL:-critical}
 TCOLS="$(tput cols)"
+export TCOLS
 FCOLS="$(( TCOLS - 22))"
 export FCOLS
 
@@ -55,7 +59,7 @@ apt autoremove -y
 
 printf 'Configuring system for first use'
 printf 'Passwords are set on first run only'
-printf  '%s\n%s\n' "${USER_PASSWORD?}" "${USER_PASSWORD?}" | passwd dev_site
+printf  '%s\n%s\n' "${SITE_PASS?}" "${SITE_PASS?}" | passwd dev_site
 printf 'Linux user [dev_site] password is set to [%s]' "${SITE_PASS} " > /dev/stdout
 
 
@@ -86,7 +90,7 @@ sed -i.bak "s/__sqlpassword__/${SQL_PASSWORD}/" /data/html/index.php && rm index
 if [ "$TLS" ]; then
 # Creat default SSL certificate demo site
 openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /data/conf/nginx/tls/"$WEBSITE".key -out /data/conf/nginx/tls/"$WEBSITE".crt -subj "/C=US/ST=California/L=Webapps/O=Development, Inc./OU=IT/CN=$WEBSITE"
-openssl dhparam -out /data/conf/nginx/ssl/dhparam.pem 2048
+openssl dhparam -out /data/conf/nginx/tls/dhparam.pem 2048
 ln -s /data/conf/nginx/sites-available/dev_site_tls.conf /data/conf/nginx/sites-enabled/
 echo "Replace the self-signed certificates with real ones if you need to"
 echo "Certbot is installed for automating this"
@@ -112,9 +116,10 @@ cat << SETUP > /tmp/mysql_setup.sql
     CREATE USER $SQL_USER@'localhost' IDENTIFIED BY "$SQL_PASSWORD";
     GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'localhost' ;
     CREATE USER $SQL_USER@'$HOSTNAME' IDENTIFIED BY "$SQL_PASSWORD";
-    GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'$HOSTNAME' ;  
-    SET PASSWORD FOR 'root'@'localhost' = PASSWORD("$SQL_ROOT_PASSWORD");
+    GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'$HOSTNAME' ;      
     SET PASSWORD FOR 'root'@'$HOSTNAME' = PASSWORD("$SQL_ROOT_PASSWORD");
+    SET PASSWORD FOR 'root'@'localhost' = PASSWORD("$SQL_ROOT_PASSWORD");
+    FLUSH PRIVILEGES;
     delete from user where user='';
     FLUSH PRIVILEGES;
 SETUP
@@ -177,9 +182,14 @@ echo "database password set to [$SQL_PASSWORD]" > /dev/stdout
 echo "database root password is set to [$SQL_ROOT_PASSWORD]" > /dev/stdout
 echo "Linux user [dev_site] password is set to [$SITE_PASS]" > /dev/stdout
 touch /data/is_configured
-fi
-# end first run work
 
+# Add clearing any password variables on to path
+echo  "unset SITE_PASS MYSQL_USER_PASS MYSQL_ROOT_PASS SSH_PUBLIC " > /etc/profile.d/10-clear-passwords.sh
+echo  "unset SITE_PASS MYSQL_USER_PASS MYSQL_ROOT_PASS SSH_PUBLIC " >> /root/.profile
+echo  "unset SITE_PASS MYSQL_USER_PASS MYSQL_ROOT_PASS SSH_PUBLIC " >> /root/.bashrc
+
+# end first run work
+fi
 
 echo "Starting docker: $MYNAME" > /dev/stdout
 echo "website name set to [$WEBSITE]" > /dev/stdout
@@ -191,7 +201,7 @@ service postfix start
 service ssh start
 if service php7.2-fpm start;
 then
-   printf ' * php-fpm started%*s\n' "$FCOLS" "[OK]" > /dev/stdout
+   printf ' * php-fpm started%*s\n' "$FCOLS" "[ OK ]" > /dev/stdout
 fi
 service nginx start
 
@@ -208,6 +218,10 @@ then
 	tail -f LOG_STDOUT > /dev/stdout
 fi
 
+
+
+# Unset all password variables:
+unset SITE_PASS MYSQL_USER_PASS MYSQL_ROOT_PASS SSH_PUBLIC
 
 #if the container is stopped and started we will not be able to redirect so we need this
 # statement to keep it running
