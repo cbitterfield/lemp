@@ -40,9 +40,8 @@ export SITE_PASS=${SITE_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1
 export LOG_LEVEL=${LOG_LEVEL:-critical}
 TCOLS="$(tput cols)"
 FCOLS="$(( TCOLS - 16))"
-export COLS="${TCOLS:-80}"
-export FPMCOLS="${FCOLS:-40}"
-
+export FCOLS
+export FPMCOLS="${FCOLS:-80}"
 
 
 
@@ -188,7 +187,6 @@ service postfix start
 service ssh start
 if service php7.2-fpm start;
 then
-   printf 'TCOLS %s FCOLS %s'  "$TCOLS" "FCOLS"  > /dev/stdout
    printf ' * php-fpm started%*s\n' "$FPMCOLS" "[OK]" > /dev/stdout
 fi
 service nginx start
