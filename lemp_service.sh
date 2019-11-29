@@ -28,8 +28,8 @@ unset MOUNT_POINT
 fi
 
 set -e
-NAME=LEMP2
-INSTANCE="cbitterfield/lemp2:latest"
+NAME=LEMP
+INSTANCE="cbitterfield/lemp:latest"
 
 #Build the docker command based on parameters:
 #It will be docker run CMD
@@ -59,7 +59,7 @@ case "$1" in
         if [ "$MOUNT_POINT" ]; then echo "MOUNT_POINT is $MOUNT_POINT" ; fi
         echo "All undefined values are defaulted on startup and presented to sdtout"
         echo "In the user directory is a copy of all of the passswords, delete after you have downloaded it"
-        # Test to see if a container is already running as LEMP2
+        # Test to see if a container is already running as LEMP
         
         LEMP2="$(docker ps -f name=$NAME -qa)"
         if [ "$LEMP2" ]; then 
@@ -99,9 +99,9 @@ case "$1" in
 	printf "Set the following environment variables"
 	printf "{ LOG_STDOUT | LOG_LEVEL | WEBSITE | SSH_PORT | MYSQL_PORT | HTTP_PORT | HTTPS_PORT | DEVSITE_PASS | WEBSITE_PASSWORD | MYSQL_ROOT_PASSWORD "
 	printf "\t DATABASE_USER | DATABASE_USER_PASS }"
-	printf "docker run -it --name LEMP2 -p "$HTTP_PORT":80 -p HTTPS_PORT:443 -p "$SSH_PORT":22 \\"
+	printf "docker run -it --name LEMP -p "$HTTP_PORT":80 -p HTTPS_PORT:443 -p "$SSH_PORT":22 \\"
 	printf "-p "$MYSQL_PORT":3306 --add-host "$WEBSITE":127.0.0.1 \\ "
-	printf "--env WEBISTE  --env LOG_STDOUT  --env LOG_LEVEL cbitterfield/lemp2:latest "
+	printf "--env WEBISTE  --env LOG_STDOUT  --env LOG_LEVEL cbitterfield/lemp:latest "
 	
 	;;
 

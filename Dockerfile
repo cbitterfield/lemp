@@ -3,7 +3,7 @@ FROM ubuntu:18.04
 USER root
 LABEL Description="Development environment for LEMP stack, based on Ubuntu 18.04 LTS. Includes .htaccess support and popular PHP7 features, including composer and mail() function." 
 LABEL License="GNU Public License 3.0" 
-LABEL Usage="docker run -d -p [HOST WWW PORT NUMBER]:80 -p [HOST WWW TLS PORT NUMBER]:443 -p [HOST DB PORT NUMBER]:3306 -v [HOST WWW DOCUMENT ROOT]:/data -v cbitterfield/lemp2" 
+LABEL Usage="docker run -d -p [HOST WWW PORT NUMBER]:80 -p [HOST WWW TLS PORT NUMBER]:443 -p [HOST DB PORT NUMBER]:3306 -v [HOST WWW DOCUMENT ROOT]:/data -v cbitterfield/lemp" 
 LABEL Version="2.0"
 LABEL maintainer="Colin Bitterfield <colin@bitterfield.com>"
 LABEL Author="Colin Bitterfield <colin@bitterfield.com>"
