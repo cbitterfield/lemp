@@ -1,5 +1,5 @@
 # Create a LEMP docker iamge with NGINX and MYSQL
-# Creating a version 1.0
+# Creating a version 1.1
 FROM ubuntu:18.04
 USER root
 LABEL Description="Development environment for LEMP stack, based on Ubuntu 18.04 LTS. Includes .htaccess support and popular PHP7 features, including composer and mail() function." 
