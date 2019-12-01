@@ -20,13 +20,15 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # Set debian conf
 # Must run first 
-COPY debconf.selections /tmp/
+COPY debconf.selections /tmp/debconf.selections
 RUN debconf-set-selections /tmp/debconf.selections
+
 
 # Create Data Directories
 RUN mkdir /data
 RUN mkdir /data/html
 RUN mkdir /data/mysql
+RUN mkdir /data/examples
 # Create the logs directories
 RUN (mkdir /data/logs; mkdir /data/logs/nginx;mkdir /data/logs/mysql)
 # Create the configuration directories
@@ -37,6 +39,7 @@ RUN mkdir /.data
 RUN mkdir /.data/html
 RUN mkdir /.data/mysql
 RUN mkdir /.data/conf
+RUN mkdir /.data/examples
 # Create the logs directories
 RUN (mkdir /.data/logs; mkdir /.data/logs/nginx;mkdir /.data/logs/mysql)
 # Create the configuration directories
@@ -118,6 +121,12 @@ COPY phpmyadmin_tls.conf /.data/conf/nginx/sites-available/phpmyadmin_tls.conf
 COPY index.php /.data/html/
 COPY http_nginx.conf /.data/conf/nginx/conf.d/
 COPY pre_http_nginx.conf /.data/conf/nginx/conf.d/
+# Copy Examples and service files to /data/examples
+COPY secure_headers_nginx_example.conf /.data/examples/
+COPY lemp_service.sh /.data/examples/
+COPY LICENSE /.data/examples/
+COPY README.md /.data/examples/
+COPY set_environment.sh /.data/examples/
 
 # Add MySQL aka MarianDB
 RUN apt-get install mariadb-common mariadb-server mariadb-client -y
@@ -147,8 +156,7 @@ ENV MYSQL_USER_PASS="**notdefined**"
 ENV SITE_PASS="**notdefined**"
 ENV SSH_PUBLIC="**notdefined**"
 ENV TLS="**Boolean**"
-ENV PADMIN_USER="**notdefined**"
-ENV PADMIN_PASS="**notdefined**"
+
 
 
 

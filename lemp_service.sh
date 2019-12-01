@@ -20,8 +20,6 @@ export MYSQL_USER=${MYSQL_USER:-**notdefined**}
 export MYSQL_USER_PASS=${MYSQL_USER_PASS:-**notdefined**}
 export SITE_PASS=${SITE_PASS:-**notdefined**}
 export SSH_PUBLIC=${SSH_PUBLIC:-"**notdefined**"}
-export PADMIN_USER=${PADMIN_USER:-"**notdefined**"}
-export PADMIN_PASS=${PADMIN_PASS:-"**notdefined**"}
 
 export HOST_MOUNT=${HOST_MOUNT:-''}
 if [ $HOST_MOUNT ]; then 

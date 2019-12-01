@@ -40,8 +40,6 @@ export SQL_PASSWORD=${MYSQL_USER_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | he
 export SQL_USER=${MYSQL_USER:-lemp}
 export SQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
 export SITE_PASS=${SITE_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
-export PADMIN_PASS=${PADMIN_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
-export PADMIN_PASS=${PADMIN_USER:-padmin}
 export LOG_LEVEL=${LOG_LEVEL:-critical}
 TCOLS="$(tput cols)"
 export TCOLS
@@ -119,8 +117,6 @@ cat << SETUP > /tmp/mysql_setup.sql
     GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'localhost' ;
     CREATE USER $SQL_USER@'$HOSTNAME' IDENTIFIED BY "$SQL_PASSWORD";
     GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'$HOSTNAME' ; 
-    CREATE USER '$PADMIN_USER'@'localhost' IDENTIFIED BY '$PADMIN_PASS';
-    GRANT ALL PRIVILEGES ON *.* TO 'padmin'@'localhost' WITH GRANT OPTION;
     delete from user where user='';     
     SET PASSWORD FOR 'root'@'$HOSTNAME' = PASSWORD("$SQL_ROOT_PASSWORD");
     SET PASSWORD FOR 'root'@'localhost' = PASSWORD("$SQL_ROOT_PASSWORD");
@@ -198,6 +194,8 @@ sed -i.bak "s/__database__/${DATABASE}/" /etc/phpmyadmin/config-db.php && rm con
 sed -i.bak "s/__admin_user__/${PADMIN_USER}/" /etc/phpmyadmin/config-db.php && rm config-db.php.bak
 sed -i.bak "s/__database__/${PADMIN_PASS}/" /etc/phpmyadmin/config-db.php && rm config-db.php.bak
 ln -s /data/conf/nginx/sites-available/phpmyadmin_tls.conf /data/conf/nginx/sites-enabled/
+sed -i.bak "s/__database__/${DATABASE}/" /etc/dbconfig-common/phpmyadmin.conf && rm dbconfig-common/phpmyadmin.conf.bak
+
 
 # end first run work
 fi
