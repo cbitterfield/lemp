@@ -20,6 +20,9 @@ export MYSQL_USER=${MYSQL_USER:-**notdefined**}
 export MYSQL_USER_PASS=${MYSQL_USER_PASS:-**notdefined**}
 export SITE_PASS=${SITE_PASS:-**notdefined**}
 export SSH_PUBLIC=${SSH_PUBLIC:-"**notdefined**"}
+export PADMIN_USER=${PADMIN_USER:-"**notdefined**"}
+export PADMIN_PASS=${PADMIN_PASS:-"**notdefined**"}
+
 export HOST_MOUNT=${HOST_MOUNT:-''}
 if [ $HOST_MOUNT ]; then 
 export MOUNT_POINT="${HOST_MOUNT}:/data"
@@ -40,6 +43,7 @@ if [ "$HTTP_PORT" ]; then CMD="$CMD -p $HTTP_PORT:80"  ; fi
 if [ "$HTTPS_PORT" ]; then CMD="$CMD -p $HTTPS_PORT:443 "  ; fi
 if [ "$MYSQL_PORT" ]; then CMD="$CMD -p $MYSQL_PORT:3306 "  ; fi
 if [ "$WEBSITE" ]; then CMD="$CMD --add-host $WEBSITE:127.0.0.1 "  ; fi
+CMD="$CMD  --add-host phpmyadmin.local:127.0.0.1 "
 CMD="$CMD --env WEBSITE  --env LOG_STDOUT  --env LOG_LEVEL --env MYSQL_USER --env TLS --env MYSQL_USER_PASS --env MYSQL_ROOT_PASS --env SITE_PASS --env SSH_PUBLIC --env MYSQL_DATABASE"
 if [ "$MOUNT_POINT" ]; then CMD="$CMD -v $MOUNT_POINT "  ; fi
 CMD="$CMD $INSTANCE"

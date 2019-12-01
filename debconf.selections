@@ -1,3 +1,13 @@
 postfix postfix/mailname string localhost
 postfix postfix/main_mailer_type string 'Docker Postfix'
 tzdata	tzdata/Zones/Etc string 'UTC'
+
+phpmyadmin phpmyadmin/internal/skip-preseed boolean true
+phpmyadmin phpmyadmin/reconfigure-webserver multiselect
+phpmyadmin phpmyadmin/dbconfig-install boolean false
+phpmyadmin	phpmyadmin/db/app-user	string __app_user
+phpmyadmin	phpmyadmin/mysql/admin-user	string __admin_user__
+phpmyadmin	phpmyadmin/mysql/app-pass password __app_pass__
+phpmyadmin	phpmyadmin/mysql/admin-pass	password __admin_pass
+phpmyadmin	phpmyadmin/db/dbname string __database__
+phpmyadmin	phpmyadmin/database-type string mysql

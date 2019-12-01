@@ -6,7 +6,7 @@ printf 'Starting node %s' "${MYNAME}"
 
 
 #CONSTANTS
-VARLIST="LOG_STDOUT LOG_LEVEL MYSQL_DATABASE MYSQL_USER MYSQL_USER_PASS MYSQL_ROOT_PASS SITE_PASS SSH_PUBLIC"
+VARLIST="LOG_STDOUT LOG_LEVEL MYSQL_DATABASE MYSQL_USER MYSQL_USER_PASS MYSQL_ROOT_PASS SITE_PASS SSH_PUBLIC PADMIN_USER PADMIN_PASS"
 # Functions
 function exportBoolean {
     if [ "${!1}" = "**Boolean**" ]; then
@@ -40,6 +40,8 @@ export SQL_PASSWORD=${MYSQL_USER_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | he
 export SQL_USER=${MYSQL_USER:-lemp}
 export SQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
 export SITE_PASS=${SITE_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
+export PADMIN_PASS=${PADMIN_PASS:-$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c"${1:-8}";echo)}
+export PADMIN_PASS=${PADMIN_USER:-padmin}
 export LOG_LEVEL=${LOG_LEVEL:-critical}
 TCOLS="$(tput cols)"
 export TCOLS
@@ -99,12 +101,12 @@ fi
 
 
 # Create and error configuration file for nginx
-echo "error_log /var/log/nginx/nginx_error.log debug;" > /data/conf/nginx/conf.d/error_nginx.conf
-echo "error_log /var/log/nginx/default_error.log debug;" > /data/conf/nginx/conf.d/error_default.conf
-echo "error_log /var/log/nginx/dev_site.error.log debug;" > /data/conf/nginx/conf.d/error_dev.conf
+echo -e "\terror_log /data/logs/nginx/nginx_error.log debug;" > /data/conf/nginx/conf.d/error_nginx.conf
+echo -e "\terror_log /data/logs/nginx/default_error.log debug;" > /data/conf/nginx/conf.d/error_default.conf
+echo -e "\terror_log /data/logs/nginx/dev_site.error.log debug;" > /data/conf/nginx/conf.d/error_dev.conf
 
 echo "Creating MySQL Database and setting user/password and root password"
-echo "Initializing mysql datbase"
+echo "Initializing mysql database"
 /usr/bin/mysql_install_db > /dev/null
 service mysql start
 /usr/bin/mysqladmin create "$SQL_DATABASE"
@@ -116,11 +118,12 @@ cat << SETUP > /tmp/mysql_setup.sql
     CREATE USER $SQL_USER@'localhost' IDENTIFIED BY "$SQL_PASSWORD";
     GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'localhost' ;
     CREATE USER $SQL_USER@'$HOSTNAME' IDENTIFIED BY "$SQL_PASSWORD";
-    GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'$HOSTNAME' ;      
+    GRANT ALL PRIVILEGES ON $SQL_DATABASE . * TO $SQL_USER@'$HOSTNAME' ; 
+    CREATE USER '$PADMIN_USER'@'localhost' IDENTIFIED BY '$PADMIN_PASS';
+    GRANT ALL PRIVILEGES ON *.* TO 'padmin'@'localhost' WITH GRANT OPTION;
+    delete from user where user='';     
     SET PASSWORD FOR 'root'@'$HOSTNAME' = PASSWORD("$SQL_ROOT_PASSWORD");
     SET PASSWORD FOR 'root'@'localhost' = PASSWORD("$SQL_ROOT_PASSWORD");
-    FLUSH PRIVILEGES;
-    delete from user where user='';
     FLUSH PRIVILEGES;
 SETUP
 
@@ -187,6 +190,14 @@ touch /data/is_configured
 echo  "unset SITE_PASS MYSQL_USER_PASS MYSQL_ROOT_PASS SSH_PUBLIC " > /etc/profile.d/10-clear-passwords.sh
 echo  "unset SITE_PASS MYSQL_USER_PASS MYSQL_ROOT_PASS SSH_PUBLIC " >> /root/.profile
 echo  "unset SITE_PASS MYSQL_USER_PASS MYSQL_ROOT_PASS SSH_PUBLIC " >> /root/.bashrc
+
+# Configure PHPMYADMIN
+cd /etc/phpmyadmin
+openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /data/conf/nginx/tls/phpmyadmin.local.key -out /data/conf/nginx/tls/phpmyadmin.local.crt -subj "/C=US/ST=California/L=Webapps/O=Development, Inc./OU=IT/CN=phpmyadmin.local"
+sed -i.bak "s/__database__/${DATABASE}/" /etc/phpmyadmin/config-db.php && rm config-db.php.bak
+sed -i.bak "s/__admin_user__/${PADMIN_USER}/" /etc/phpmyadmin/config-db.php && rm config-db.php.bak
+sed -i.bak "s/__database__/${PADMIN_PASS}/" /etc/phpmyadmin/config-db.php && rm config-db.php.bak
+ln -s /data/conf/nginx/sites-available/phpmyadmin_tls.conf /data/conf/nginx/sites-enabled/
 
 # end first run work
 fi

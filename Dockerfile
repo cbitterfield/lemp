@@ -18,6 +18,11 @@ ARG LEMP_GRP=1000
 ARG DATE_TIMEZONE=UTC
 ARG DEBIAN_FRONTEND=noninteractive
 
+# Set debian conf
+# Must run first 
+COPY debconf.selections /tmp/
+RUN debconf-set-selections /tmp/debconf.selections
+
 # Create Data Directories
 RUN mkdir /data
 RUN mkdir /data/html
@@ -43,7 +48,7 @@ RUN apt-get upgrade -y
 
 # Add Basic Utilities needed
 RUN apt-get install -y zip unzip
-RUN apt install debconf-utils sudo -y 
+RUN apt install debconf-utils sudo bind9-host -y 
 RUN apt-get install git nodejs npm composer nano tree vim curl ftp ssh certbot -y
 
 # Add Python 3.8
@@ -95,6 +100,8 @@ RUN apt-get install \
 # Configure PHP and set php.ini file location
 
 
+
+
 # Install NGINX and prepare example fines
 RUN apt-get install nginx nginx-extras -y
 RUN sed -i '/include \/etc\/nginx\/conf.d/c \\tinclude \/data\/conf\/nginx_conf.d\/http_*.conf;' /etc/nginx/nginx.conf
@@ -107,6 +114,7 @@ RUN unlink /etc/nginx/sites-enabled/default
 COPY default_site.conf /.data/conf/nginx/sites-available/default_site.conf
 COPY dev_site.conf /.data/conf/nginx/sites-available/dev_site.conf
 COPY dev_site_tls.conf /.data/conf/nginx/sites-available/dev_site_tls.conf
+COPY phpmyadmin_tls.conf /.data/conf/nginx/sites-available/phpmyadmin_tls.conf
 COPY index.php /.data/html/
 COPY http_nginx.conf /.data/conf/nginx/conf.d/
 COPY pre_http_nginx.conf /.data/conf/nginx/conf.d/
@@ -116,10 +124,16 @@ RUN apt-get install mariadb-common mariadb-server mariadb-client -y
 RUN echo '!includedir /data/conf/mysql/' >> /etc/mysql/my.cnf
 COPY docker_mysql.cnf /etc/mysql/mariadb.conf.d/99-mysqld_datadir.cnf
 
-# Set debian conf
-COPY debconf.selections /tmp/
-RUN debconf-set-selections /tmp/debconf.selections
+# Add PHP Modules mcrypt
+RUN apt-get install libmcrypt-dev -y
+RUN pear config-set php_ini   /etc/php/7.2/cli/php.ini
+RUN pecl config-set php_ini  /etc/php/7.2/cli/php.ini
+RUN pecl channel-update pecl.php.net
+RUN echo '' | pecl install mcrypt-1.0.1
 
+
+# Add PHPMYADMIN
+RUN apt-get install phpmyadmin -y
 
 # Set Environment Variables And Defaults
 #Environment variables for use in running image
@@ -133,7 +147,8 @@ ENV MYSQL_USER_PASS="**notdefined**"
 ENV SITE_PASS="**notdefined**"
 ENV SSH_PUBLIC="**notdefined**"
 ENV TLS="**Boolean**"
-
+ENV PADMIN_USER="**notdefined**"
+ENV PADMIN_PASS="**notdefined**"
 
 
 
