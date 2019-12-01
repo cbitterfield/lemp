@@ -151,8 +151,8 @@ cat << EOB > /dev/stdout
     
     ****************************************************************
     *                                                              *
-    *    Docker image: cbitterfield/lemp-ubuntu18-04               *
-    *    GitHub:https://github.com/cbitterfield/lemp-ubuntu18-04   *
+    *    Docker image: cbitterfield/lemp                           *
+    *    GitHub:https://github.com/cbitterfield/lemp               *
     *                                                              *
     ****************************************************************
 
