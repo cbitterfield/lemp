@@ -1,7 +1,7 @@
 # Set Default Environment Variables here
 export LOG_STDOUT=/data/logs/nginix/dev_site/access.log
 export LOG_LEVEL=info
-export WEBSITE=xxx-example.local
+export WEBSITE=www.example.local
 export SSH_PORT=2222
 export MYSQL_PORT=6306
 export HTTP_PORT=8080
