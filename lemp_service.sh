@@ -97,13 +97,13 @@ case "$1" in
 	;;
 	
 	show_docker)
-	printf "Docker Command for usage"
-	printf "Set the following environment variables"
-	printf "{ LOG_STDOUT | LOG_LEVEL | WEBSITE | SSH_PORT | MYSQL_PORT | HTTP_PORT | HTTPS_PORT | DEVSITE_PASS | WEBSITE_PASSWORD | MYSQL_ROOT_PASSWORD "
-	printf "\t DATABASE_USER | DATABASE_USER_PASS }"
-	printf "docker run -it --name LEMP -p "$HTTP_PORT":80 -p HTTPS_PORT:443 -p "$SSH_PORT":22 \\"
-	printf "-p "$MYSQL_PORT":3306 --add-host "$WEBSITE":127.0.0.1 \\ "
-	printf "--env WEBISTE  --env LOG_STDOUT  --env LOG_LEVEL cbitterfield/lemp:latest "
+	echo "Docker Command for usage"
+	echo "Set the following environment variables"
+	echo "{ LOG_STDOUT | LOG_LEVEL | WEBSITE | SSH_PORT | MYSQL_PORT | HTTP_PORT | HTTPS_PORT | DEVSITE_PASS | WEBSITE_PASSWORD | MYSQL_ROOT_PASSWORD | DATABASE_USER | DATABASE_USER_PASS }"
+	echo "docker run -it --name LEMP -p $HTTP_PORT:80 -p HTTPS_PORT:443 -p $SSH_PORT:22 \\"
+	echo "-p $MYSQL_PORT:3306 --add-host $WEBSITE:127.0.0.1 \\ "
+	echo "--env WEBSITE  --env LOG_STDOUT  --env LOG_LEVEL --env MYSQL_USER --env TLS --env MYSQL_USER_PASS --env MYSQL_ROOT_PASS --env SITE_PASS --env SSH_PUBLIC --env MYSQL_DATABASE \\"	
+	echo "cbitterfield/lemp:latest "
 	
 	;;
 

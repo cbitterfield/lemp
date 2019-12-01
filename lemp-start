@@ -123,7 +123,7 @@ cat << SETUP > /tmp/mysql_setup.sql
     FLUSH PRIVILEGES;
 SETUP
 
-mysql -u root mysql < /tmp/mysql_setup.sql
+mysql -u root mysql < /tmp/mysql_setup.sql > /dev/null
 rm /tmp/mysql_setup.sql
 
 if [ "$SSH_PUBLIC" ]; then
@@ -194,7 +194,7 @@ sed -i.bak "s/__database__/${DATABASE}/" /etc/phpmyadmin/config-db.php && rm con
 sed -i.bak "s/__admin_user__/${PADMIN_USER}/" /etc/phpmyadmin/config-db.php && rm config-db.php.bak
 sed -i.bak "s/__database__/${PADMIN_PASS}/" /etc/phpmyadmin/config-db.php && rm config-db.php.bak
 ln -s /data/conf/nginx/sites-available/phpmyadmin_tls.conf /data/conf/nginx/sites-enabled/
-sed -i.bak "s/__database__/${DATABASE}/" /etc/dbconfig-common/phpmyadmin.conf && rm dbconfig-common/phpmyadmin.conf.bak
+sed -i.bak "s/__database__/${DATABASE}/" /etc/dbconfig-common/phpmyadmin.conf && /etc/rm dbconfig-common/phpmyadmin.conf.bak
 
 
 # end first run work
